@@ -31,15 +31,8 @@ end
 clearvars varargin def_args argin %clear up memory
     
 %% particle identification
-wb = waitbar(0,'Identifying particles');
-tfact = 1/size(frames,3);
-for t = 1 : size(frames,3)
-    im = SNR_booster(frames(:,:,t));
-    position(t).p = particle_identify(im,local_thd,Gauss_width,wide2,num_std);
-    waitbar(t*tfact,wb);
-end
-close(wb);
-% assignin('base','position',position)
+position = KKframe2particles(frames,local_thd,Gauss_width,wide2,num_std);
+
 %% mapping
 disp('mapping')
 % initial the trajectory matrix: first diminsion is time, second is x, y,
