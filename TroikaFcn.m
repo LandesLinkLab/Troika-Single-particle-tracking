@@ -1,45 +1,30 @@
-function [ trjR , filename , filepath , position , frames ] = TroikaFcn( varargin )
+function [ trjR , position , frames ] = TroikaFcn( frames , varargin )
 %TroikaFcn Function form of main_Troika
-%   INPUT:  ** For no inputs, run main_Troika
-%           Data1 - raw data, array of size [Y,X,T]
-%           search_r - search radius for linking trajectories
-%           local_thd - to decide if local thresholding is needed
-%           Gauss_width - estimated Gaussian standard deviation. This 
-%               parameter will decide the size of the fitting region.
-%           wide2 - the wide threshold
-%           num_std - How many standard deviations to add up as threshold
+%   INPUT:  Data1 - raw data, array of size [Y,X,T]
+%           varargin = {search_r,local_thd,Gauss_width,wide2,num_std}
+%               search_r - search radius for linking trajectories
+%               local_thd - to decide if local thresholding is needed
+%               Gauss_width - estimated Gaussian standard deviation. This 
+%                   parameter will decide the size of the fitting region.
+%               wide2 - the wide threshold
+%               num_std - How many standard deviations to add up as 
+%                   threshold
 %           
-%   OUTPUT: [ trjR , filename , filepath , position , frames ]
+%   OUTPUT: [ trjR , position , frames ]
 %% handling input variables
-%def_args: search_r,local_thd,Gauss_width,wide2,num_std,search_gap,gap_frame
+%def_args: search_r,local_thd,Gauss_width,wide2,num_std
 def_args = { 1.5 , true , 3 , 2 , 3};
-if nargin == 0; varargin = {[]}; end
-if isempty(varargin{1})
-    [filename, filepath] = uigetfile;
-    frames = importdata([filepath,filename]);
-    if isstruct(frames); frames = frames.Data1; end
-else frames = varargin{1};
-    filename = [];
-    filepath = [];
-end
+
 if nargin > 1
-    argin = varargin(2:end);
-    tmpind = find(~cellfun(@isempty,argin));
+    tmpind = find(~cellfun(@isempty,varargin));
     def_args(tmpind) = argin(tmpind);
 end
 [search_r, local_thd, Gauss_width, wide2, num_std] = def_args{:};
 clearvars varargin def_args argin %clear up memory
     
 %% particle identification
-wb = waitbar(0,'Identifying particles');
-tfact = 1/size(frames,3);
-for t = 1 : size(frames,3)
-    im = SNR_booster(frames(:,:,t));
-    position(t).p = particle_identify(im,local_thd,Gauss_width,wide2,num_std);
-    waitbar(t*tfact,wb);
-end
-close(wb);
-% assignin('base','position',position)
+position = KKframe2particles(frames,local_thd,Gauss_width,wide2,num_std);
+
 %% mapping
 disp('mapping')
 % initial the trajectory matrix: first diminsion is time, second is x, y,
