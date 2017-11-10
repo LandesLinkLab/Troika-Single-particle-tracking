@@ -1,4 +1,4 @@
-function [ trjR , filename , filepath , position , frames ] = TroikaFcn( varargin )
+function [ trjR , position , frames ] = TroikaFcn( frames , varargin )
 %TroikaFcn Function form of main_Troika
 %   INPUT:  ** For no inputs, run main_Troika
 %           Data1 - raw data, array of size [Y,X,T]
@@ -13,18 +13,9 @@ function [ trjR , filename , filepath , position , frames ] = TroikaFcn( varargi
 %% handling input variables
 %def_args: search_r,local_thd,Gauss_width,wide2,num_std,search_gap,gap_frame
 def_args = { 1.5 , true , 3 , 2 , 3};
-if nargin == 0; varargin = {[]}; end
-if isempty(varargin{1})
-    [filename, filepath] = uigetfile;
-    frames = importdata([filepath,filename]);
-    if isstruct(frames); frames = frames.Data1; end
-else frames = varargin{1};
-    filename = [];
-    filepath = [];
-end
+
 if nargin > 1
-    argin = varargin(2:end);
-    tmpind = find(~cellfun(@isempty,argin));
+    tmpind = find(~cellfun(@isempty,varargin));
     def_args(tmpind) = argin(tmpind);
 end
 [search_r, local_thd, Gauss_width, wide2, num_std] = def_args{:};
