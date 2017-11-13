@@ -118,8 +118,7 @@ end
 max_map = max_map .* (im - bg);
 %
 %% calculate the subpixel position of each particle
-% We use Parthasarathy's radial symmetry method here because it is fast and
-% accurate. Detail see nmeth.2071
+% We use Gaussian fitting here
 match_r = 2 * Gauss_width; % the size of fitting region is match_r*2+1
 if isnan(sum(max_map(:))) || isinf(sum(max_map(:)))
     params = [];
