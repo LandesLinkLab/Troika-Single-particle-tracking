@@ -17,7 +17,7 @@ def_args = { 1.5 , true , 3 , 2 , 3};
 
 if nargin > 1
     tmpind = find(~cellfun(@isempty,varargin));
-    def_args(tmpind) = argin(tmpind);
+    def_args(tmpind) = varargin(tmpind);
 end
 [search_r, local_thd, Gauss_width, wide2, num_std] = def_args{:};
 clearvars varargin def_args argin %clear up memory
