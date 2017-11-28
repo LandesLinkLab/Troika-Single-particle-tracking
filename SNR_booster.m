@@ -23,6 +23,6 @@ mask(ceil(v/2):ceil(v/2)+ex_w-1,ceil(h/2):ceil(h/2)+ex_w-1) = ones(ex_w, ex_w);
 % Convolution
 ft_mask = fft2(mask);
 for t = 1:T
-    ft_im = fft2(frame(:,:,T));
-    im_out(:,:,T) = real(fftshift(ifft2(ft_mask .* ft_im))) / ex_w^2;
+    ft_im = fft2(frame(:,:,t));
+    im_out(:,:,t) = real(fftshift(ifft2(ft_mask .* ft_im))) / ex_w^2;
 end
