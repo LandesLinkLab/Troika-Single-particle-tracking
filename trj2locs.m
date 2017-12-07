@@ -11,6 +11,6 @@ numlocs = sum(squeeze(trjR(:,1,:) ~= 0),2); % Number of locs in each frame
 trjR = permute(trjR,[3,1,2]);
 trjR = trjR(trjR~=0);
 newN = numel(trjR)/D;
-trjR = reshape(newN,D);
+trjR = reshape(trjR,newN,D);
 
 clocs = mat2cell(trjR,numlocs,D);
