@@ -96,17 +96,21 @@ pos_check = max_map;
 if numel(thd_map) > 1
     thd_map = thd_map(1+wide:v-wide, 1+wide:h-wide);
 end
-max_map(1+wide:v-wide, 1+wide:h-wide) = center > thd_map;% each center is compared
-% with its local threshold.
-% the two loops below are intended to select the local maximums that meet two
-% conditions: 
+% each center is compared with its local threshold
+max_map(1+wide:v-wide, 1+wide:h-wide) = center > thd_map;
+% the two loops below are intended to select the local maximums that meet 
+% two conditions: 
 % 1, the selected neighbors are not brighter than the center;
 % 2, the selected neighbors are also brighter than the local threshold.
-%RB - ???? what is going on here?
+%RB - variable wide is used as both the check for how local a maxima is, as
+%well as ensuring all values within the circle are over the threshold.
 for i = -wide : wide
     for j = -wide : wide
-        if i^2 + j^2 <= wide2^2
-            %RB - not sure what this is doing... why +i to beginning & end?
+        if i^2 + j^2 <= wide2^2 % Only calculate if it's within a circle
+            % Assign to matrix pox_check within a boarder defined by wide.
+            % Shift the image around and compare with center (the original
+            % image) to determine locality of maxima, and compare with
+            % thd_map to ensure all points are over the local threshold
             pos_check(1+wide:v-wide, 1+wide:h-wide) = ...
                 im(1+wide+i:v-wide+i, 1+wide+j:h-wide+j) <= center & ...
                 im(1+wide+i:v-wide+i, 1+wide+j:h-wide+j) > thd_map;
