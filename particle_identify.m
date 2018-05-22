@@ -104,6 +104,8 @@ max_map(1+wide:v-wide, 1+wide:h-wide) = center > thd_map;
 % 2, the selected neighbors are also brighter than the local threshold.
 %RB - variable wide is used as both the check for how local a maxima is, as
 %well as ensuring all values within the circle are over the threshold.
+
+% overthd_map = max_map; % For use with alternate secondary condition
 for i = -wide : wide
     for j = -wide : wide
         if i^2 + j^2 <= wide2^2 % Only calculate if it's within a circle
@@ -114,6 +116,8 @@ for i = -wide : wide
             pos_check(1+wide:v-wide, 1+wide:h-wide) = ...
                 im(1+wide+i:v-wide+i, 1+wide+j:h-wide+j) <= center & ...
                 im(1+wide+i:v-wide+i, 1+wide+j:h-wide+j) > thd_map;
+%               overthd_map(1+wide+i:v-wide+i, 1+wide+j:h-wide+j);
+            % Alternate secondary condition commented about 
             max_map = max_map .* pos_check;
             pos_check = zeros(v, h);
         end
