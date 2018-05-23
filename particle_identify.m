@@ -93,6 +93,7 @@ end % if local_thd
 center = im(1+wide:v-wide, 1+wide:h-wide); %remove image borders
 max_map = zeros(v, h); %size of full image
 pos_check = max_map;
+thd_map_og = thd_map;
 if numel(thd_map) > 1
     thd_map = thd_map(1+wide:v-wide, 1+wide:h-wide);
 end
@@ -105,26 +106,45 @@ max_map(1+wide:v-wide, 1+wide:h-wide) = center > thd_map;
 %RB - variable wide is used as both the check for how local a maxima is, as
 %well as ensuring all values within the circle are over the threshold.
 
-% overthd_map = max_map; % For use with alternate secondary condition
-for i = -wide : wide
-    for j = -wide : wide
-        if i^2 + j^2 <= wide2^2 % Only calculate if it's within a circle
-            % Assign to matrix pox_check within a boarder defined by wide.
-            % Shift the image around and compare with center (the original
-            % image) to determine locality of maxima, and compare with
-            % thd_map to ensure all points are over the local threshold
-            pos_check(1+wide:v-wide, 1+wide:h-wide) = ...
-                im(1+wide+i:v-wide+i, 1+wide+j:h-wide+j) <= center & ...
-                im(1+wide+i:v-wide+i, 1+wide+j:h-wide+j) > thd_map;
-%               overthd_map(1+wide+i:v-wide+i, 1+wide+j:h-wide+j);
-            % Alternate secondary condition commented about 
-            max_map = max_map .* pos_check;
-            pos_check = zeros(v, h);
-        end
-    end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% RB edits 05/23/18 - Minor speedup by eliminating the check of
+% i^2+j^2<=wide2^2 on each step. Instead, precalculate a set of i and j to
+% loop over. This set of active pixels is also used to precalculate how
+% many neighbors are over the threshold. Minor differences may arise with
+% original Troika, as I've also fixed the bug where a neighbor pixel was
+% compared to the target threshold rather than its own.
+% NOTE - added parameter pctNNoverthd. Set to 1 to recreate original
+% Troika. Lower it to allow for some of the neighbor pixels to fall below
+% the threshold.
+
+% Preset the pixels to loop over and calculate how many neighbors fall
+% above the threshold.
+[tmpjs,tmpis] = meshgrid(-wide:wide,-wide:wide);
+ijradval = tmpis.^2 + tmpjs.^2 <= wide2^2;
+jvals = tmpjs(ijradval);
+ivals = tmpis(ijradval);
+nhood = zeros(2*wide+1);
+nhood(ijradval) = 1;
+neighborcount = imfilter(double(im > thd_map_og),nhood);
+
+% Loop over each of the neighbor pixels
+for ttt = 1:numel(jvals)
+    i = ivals(ttt);
+    j = jvals(ttt);
+    % Assign to matrix pox_check within a boarder defined by wide.
+    % Shift the image around and compare with center (the original
+    % image) to determine locality of maxima.
+    pos_check(1+wide:v-wide, 1+wide:h-wide) = ...
+        im(1+wide+i:v-wide+i, 1+wide+j:h-wide+j) <= center;
+    max_map = max_map .* pos_check;
+    pos_check = zeros(v, h);
 end
 max_map = max_map .* (im - bg);
-%
+% Set to zero all pixels that do not have enough nearest neighbors over the
+% threshold.
+pctNNoverthd = 0.9; % Forgive 10% of pixels that are below threshold
+max_map(neighborcount < pctNNoverthd*numel(jvals)) = 0;
+
 %% calculate the subpixel position of each particle
 % We use Parthasarathy's radial symmetry method here because it is fast and
 % accurate. Detail see nmeth.2071
