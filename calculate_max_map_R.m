@@ -37,6 +37,10 @@ jvals = tmpjs(ijradval);
 ivals = tmpis(ijradval);
 % Variable to count the number of neighbors over thd
 neighborcount = zeros(size(im));
+nhood = zeros(2*wide+1);
+nhood(ijradval) = 1;
+neighborcount(1+wide:v-wide, 1+wide:h-wide) = imfilter(double(center > thd_map),nhood);
+% figure(1); imagesc(neighborcount); axis image off
 
 for ttt = 1:numel(jvals)
     i = ivals(ttt);
@@ -47,9 +51,9 @@ for ttt = 1:numel(jvals)
     % thd_map to ensure all points are over the local threshold
     pos_check(1+wide:v-wide, 1+wide:h-wide) = ...
         im(1+wide+i:v-wide+i, 1+wide+j:h-wide+j) <= center;
-    neighborcount(1+wide:v-wide, 1+wide:h-wide) = ...
-        neighborcount(1+wide:v-wide, 1+wide:h-wide) + ...
-        double(im(1+wide+i:v-wide+i, 1+wide+j:h-wide+j) > thd_map);
+%     neighborcount(1+wide:v-wide, 1+wide:h-wide) = ...
+%         neighborcount(1+wide:v-wide, 1+wide:h-wide) + ...
+%         double(im(1+wide+i:v-wide+i, 1+wide+j:h-wide+j) > thd_map);
     max_map = max_map .* pos_check;
 %         figure; imagesc(max_map); axis image off
     pos_check = zeros(v, h);

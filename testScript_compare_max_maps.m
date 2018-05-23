@@ -1,4 +1,4 @@
-wide = 3;
+wide = 2;
 T = size(Data1,3);
 
 max_maps = zeros(size(Data1));
