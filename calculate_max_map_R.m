@@ -35,6 +35,8 @@ max_map(1+wide:v-wide, 1+wide:h-wide) = center > thd_map;
 ijradval = tmpis.^2 + tmpjs.^2 <= wide2^2;
 jvals = tmpjs(ijradval);
 ivals = tmpis(ijradval);
+% Variable to count the number of neighbors over thd
+neighborcount = zeros(size(im));
 
 for ttt = 1:numel(jvals)
     i = ivals(ttt);
@@ -44,10 +46,15 @@ for ttt = 1:numel(jvals)
     % image) to determine locality of maxima, and compare with
     % thd_map to ensure all points are over the local threshold
     pos_check(1+wide:v-wide, 1+wide:h-wide) = ...
-        im(1+wide+i:v-wide+i, 1+wide+j:h-wide+j) <= center & ...
-        im(1+wide+i:v-wide+i, 1+wide+j:h-wide+j) > thd_map;
+        im(1+wide+i:v-wide+i, 1+wide+j:h-wide+j) <= center;
+    neighborcount(1+wide:v-wide, 1+wide:h-wide) = ...
+        neighborcount(1+wide:v-wide, 1+wide:h-wide) + ...
+        double(im(1+wide+i:v-wide+i, 1+wide+j:h-wide+j) > thd_map);
     max_map = max_map .* pos_check;
 %         figure; imagesc(max_map); axis image off
     pos_check = zeros(v, h);
 end
+% max(neighborcount(:))
+% min(neighborcount(:))
 max_map = max_map .* (im - bg);
+max_map(neighborcount ~= numel(jvals)) = 0;
