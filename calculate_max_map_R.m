@@ -1,4 +1,4 @@
-function [ max_map ] = calculate_max_map_R( im , wide )
+function [ max_map ] = calculate_max_map_R( im , wide , pctoverthd)
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
 [v , h] = size(im);
@@ -64,4 +64,4 @@ end
 % max(neighborcount(:))
 % min(neighborcount(:))
 max_map = max_map .* (im - bg);
-max_map(neighborcount ~= numel(jvals)) = 0;
+max_map(neighborcount < pctoverthd*numel(jvals)) = 0;
