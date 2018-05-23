@@ -17,6 +17,7 @@ thd_map = bg + n * sd;
 center = im(1+wide:v-wide, 1+wide:h-wide); %remove image borders
 max_map = zeros(v, h); %size of full image
 pos_check = max_map;
+thd_map_og = thd_map;
 if numel(thd_map) > 1
     thd_map = thd_map(1+wide:v-wide, 1+wide:h-wide);
 end
@@ -36,11 +37,13 @@ ijradval = tmpis.^2 + tmpjs.^2 <= wide2^2;
 jvals = tmpjs(ijradval);
 ivals = tmpis(ijradval);
 % Variable to count the number of neighbors over thd
-neighborcount = zeros(size(im));
+% neighborcount = zeros(size(im));
 nhood = zeros(2*wide+1);
 nhood(ijradval) = 1;
-neighborcount(1+wide:v-wide, 1+wide:h-wide) = imfilter(double(center > thd_map),nhood);
+neighborcount = imfilter(double(im > thd_map_og),nhood);
 % figure(1); imagesc(neighborcount); axis image off
+% figure(462); imagesc(nhood); axis image off
+% thdval = thd_map(1)
 
 for ttt = 1:numel(jvals)
     i = ivals(ttt);
@@ -55,7 +58,7 @@ for ttt = 1:numel(jvals)
 %         neighborcount(1+wide:v-wide, 1+wide:h-wide) + ...
 %         double(im(1+wide+i:v-wide+i, 1+wide+j:h-wide+j) > thd_map);
     max_map = max_map .* pos_check;
-%         figure; imagesc(max_map); axis image off
+%         figure(24326); imagesc(max_map); axis image off
     pos_check = zeros(v, h);
 end
 % max(neighborcount(:))
