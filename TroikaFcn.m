@@ -33,7 +33,7 @@ disp('mapping')
 %ADDED BY RASHAD 3/31/2017 - also changed '1's to 'k's in the for loop
 %below
     for k = 1:numel(position)
-        if numel(position(k).p(:,1))>0
+        if size(position(k).p,1)>0
             disp(['First localizations in frame ',num2str(k)]);
             break %if the k has particles in it, break out and keep that k
         end
