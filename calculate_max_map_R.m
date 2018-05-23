@@ -1,4 +1,4 @@
-function [ max_map ] = calculate_max_map( im , wide )
+function [ max_map ] = calculate_max_map_R( im , wide )
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
 [v , h] = size(im);
@@ -29,20 +29,25 @@ max_map(1+wide:v-wide, 1+wide:h-wide) = center > thd_map;
 % 2, the selected neighbors are also brighter than the local threshold.
 %RB - variable wide is used as both the check for how local a maxima is, as
 %well as ensuring all values within the circle are over the threshold.
-for i = -wide : wide
-    for j = -wide : wide
-        if i^2 + j^2 <= wide2^2 % Only calculate if it's within a circle
-            % Assign to matrix pox_check within a boarder defined by wide.
-            % Shift the image around and compare with center (the original
-            % image) to determine locality of maxima, and compare with
-            % thd_map to ensure all points are over the local threshold
-            pos_check(1+wide:v-wide, 1+wide:h-wide) = ...
-                im(1+wide+i:v-wide+i, 1+wide+j:h-wide+j) <= center & ...
-                im(1+wide+i:v-wide+i, 1+wide+j:h-wide+j) > thd_map;
-            max_map = max_map .* pos_check;
-%             figure; imagesc(max_map); axis image off
-            pos_check = zeros(v, h);
-        end
-    end
+
+% Reformat loop over specified values rather than checking each round
+[tmpjs,tmpis] = meshgrid(-wide:wide,-wide:wide);
+ijradval = tmpis.^2 + tmpjs.^2 <= wide2^2;
+jvals = tmpjs(ijradval);
+ivals = tmpis(ijradval);
+
+for ttt = 1:numel(jvals)
+    i = ivals(ttt);
+    j = jvals(ttt);
+    % Assign to matrix pox_check within a boarder defined by wide.
+    % Shift the image around and compare with center (the original
+    % image) to determine locality of maxima, and compare with
+    % thd_map to ensure all points are over the local threshold
+    pos_check(1+wide:v-wide, 1+wide:h-wide) = ...
+        im(1+wide+i:v-wide+i, 1+wide+j:h-wide+j) <= center & ...
+        im(1+wide+i:v-wide+i, 1+wide+j:h-wide+j) > thd_map;
+    max_map = max_map .* pos_check;
+%         figure; imagesc(max_map); axis image off
+    pos_check = zeros(v, h);
 end
 max_map = max_map .* (im - bg);
