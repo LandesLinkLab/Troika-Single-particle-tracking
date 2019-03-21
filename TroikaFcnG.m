@@ -1,5 +1,5 @@
-function [ trjR , position , frames ] = TroikaFcn( frames , varargin )
-%TroikaFcn Function form of main_Troika
+function [ trjR , position , frames ] = TroikaFcnG( frames , varargin )
+%TroikaFcnG Function form of main_Troika with Gaussian fitting
 %   INPUT:  Data1 - raw data, array of size [Y,X,T]
 %           varargin = {search_r,local_thd,Gauss_width,wide2,num_std}
 %               search_r - search radius for linking trajectories
@@ -11,6 +11,7 @@ function [ trjR , position , frames ] = TroikaFcn( frames , varargin )
 %                   threshold
 %           
 %   OUTPUT: [ trjR , position , frames ]
+%           trjR - Tx4xN matrix of [x,y,Gwidth,A] row vectors 
 %% handling input variables
 %def_args: search_r,local_thd,Gauss_width,wide2,num_std
 def_args = { 1.5 , true , 3 , 2 , 3};
@@ -22,8 +23,8 @@ end
 [search_r, local_thd, Gauss_width, wide2, num_std] = def_args{:};
 clearvars varargin def_args argin %clear up memory
     
-%% particle identification
-position = KKframe2particles(frames,local_thd,Gauss_width,wide2,num_std);
+%% particle identification - Gaussian fitting
+position = KKframe2particlesG(frames,local_thd,Gauss_width,wide2,num_std);
 
 %% mapping
 disp('mapping')
@@ -33,7 +34,7 @@ disp('mapping')
 %ADDED BY RASHAD 3/31/2017 - also changed '1's to 'k's in the for loop
 %below
     for k = 1:numel(position)
-        if size(position(k).p,1)>0
+        if numel(position(k).p(:,1))>0
             disp(['First localizations in frame ',num2str(k)]);
             break %if the k has particles in it, break out and keep that k
         end

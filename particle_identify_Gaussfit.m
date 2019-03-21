@@ -1,4 +1,4 @@
-function params = particle_identify(im, varargin)
+function [params] = particle_identify_Gaussfit(im, varargin)
 %% identify particles using pre-processed image data
 %   INPUT:  im - input (single) frame to localize particles within.
 %           varargin - { local_thd , Gauss_width , wide2 , num_std }
@@ -14,7 +14,7 @@ function params = particle_identify(im, varargin)
 %                   in the paper.
 %               num_std - Default = 3. How many standard deviations to add
 %                   up as a threshold.
-%   OUTPUT: params - Nx3 matrix of [x,y,Gwidth] row vectors for identified
+%   OUTPUT: params - Nx4 matrix of [x,y,Gwidth,A] row vectors for identified
 %               particles.
 %% varargin = { local_thd , Gauss_width , wide2 , num_std }
 defargs = { true , 3 , 2 , 3 };
@@ -93,61 +93,32 @@ end % if local_thd
 center = im(1+wide:v-wide, 1+wide:h-wide); %remove image borders
 max_map = zeros(v, h); %size of full image
 pos_check = max_map;
-thd_map_og = thd_map;
 if numel(thd_map) > 1
     thd_map = thd_map(1+wide:v-wide, 1+wide:h-wide);
 end
-% each center is compared with its local threshold
-max_map(1+wide:v-wide, 1+wide:h-wide) = center > thd_map;
-% the two loops below are intended to select the local maximums that meet 
-% two conditions: 
+max_map(1+wide:v-wide, 1+wide:h-wide) = center > thd_map;% each center is compared
+% with its local threshold.
+% the two loops below are intended to select the local maximums that meet two
+% conditions: 
 % 1, the selected neighbors are not brighter than the center;
 % 2, the selected neighbors are also brighter than the local threshold.
-%RB - variable wide is used as both the check for how local a maxima is, as
-%well as ensuring all values within the circle are over the threshold.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% RB edits 05/23/18 - Minor speedup by eliminating the check of
-% i^2+j^2<=wide2^2 on each step. Instead, precalculate a set of i and j to
-% loop over. This set of active pixels is also used to precalculate how
-% many neighbors are over the threshold. Minor differences may arise with
-% original Troika, as I've also fixed the bug where a neighbor pixel was
-% compared to the target threshold rather than its own.
-% NOTE - added parameter pctNNoverthd. Set to 1 to recreate original
-% Troika. Lower it to allow for some of the neighbor pixels to fall below
-% the threshold.
-
-% Preset the pixels to loop over and calculate how many neighbors fall
-% above the threshold.
-[tmpjs,tmpis] = meshgrid(-wide:wide,-wide:wide);
-ijradval = tmpis.^2 + tmpjs.^2 <= wide2^2;
-jvals = tmpjs(ijradval);
-ivals = tmpis(ijradval);
-nhood = zeros(2*wide+1);
-nhood(ijradval) = 1;
-neighborcount = imfilter(double(im > thd_map_og),nhood);
-
-% Loop over each of the neighbor pixels
-for ttt = 1:numel(jvals)
-    i = ivals(ttt);
-    j = jvals(ttt);
-    % Assign to matrix pox_check within a boarder defined by wide.
-    % Shift the image around and compare with center (the original
-    % image) to determine locality of maxima.
-    pos_check(1+wide:v-wide, 1+wide:h-wide) = ...
-        im(1+wide+i:v-wide+i, 1+wide+j:h-wide+j) <= center;
-    max_map = max_map .* pos_check;
-    pos_check = zeros(v, h);
+%RB - ???? what is going on here?
+for i = -wide : wide
+    for j = -wide : wide
+        if i^2 + j^2 <= wide2^2
+            %RB - not sure what this is doing... why +i to beginning & end?
+            pos_check(1+wide:v-wide, 1+wide:h-wide) = ...
+                im(1+wide+i:v-wide+i, 1+wide+j:h-wide+j) <= center & ...
+                im(1+wide+i:v-wide+i, 1+wide+j:h-wide+j) > thd_map;
+            max_map = max_map .* pos_check;
+            pos_check = zeros(v, h);
+        end
+    end
 end
 max_map = max_map .* (im - bg);
-% Set to zero all pixels that do not have enough nearest neighbors over the
-% threshold.
-pctNNoverthd = 0.9; % Forgive 10% of pixels that are below threshold
-max_map(neighborcount < pctNNoverthd*numel(jvals)) = 0;
-
+%
 %% calculate the subpixel position of each particle
-% We use Parthasarathy's radial symmetry method here because it is fast and
-% accurate. Detail see nmeth.2071
+% We use Gaussian fitting here
 match_r = 2 * Gauss_width; % the size of fitting region is match_r*2+1
 if isnan(sum(max_map(:))) || isinf(sum(max_map(:)))
     params = [];
@@ -169,9 +140,10 @@ while sum(max_map(:)~=0) > 0
     clm = q - (row - 1) * v;
     clm1 = max(clm - match_r, 1);
     clm2 = min(clm + match_r, v);
-    [xc yc sigma] = radialcenter(im(clm1:clm2,row1:row2));
+    %Replaced radialcenter fn with gaussfit fn (LW 08/24/2017)
+    [A, xc, yc, sigma, offset] = gaussfit2Dnonlin(im(clm1:clm2,row1:row2));
     if sigma < sig_thd
-        params(k, 1:3) = [xc+row1-1, yc+clm1-1, sigma];
+        params(k, 1:5) = [xc+row1-1, yc+clm1-1, sigma, A, offset];
         k = k + 1;
     end
 end
